@@ -1,0 +1,108 @@
+<?php
+    require_once '_connec.php';//connection au fichier php connect
+    $pdo = new \PDO(DSN, USER, PASS);//creation de la connection a PDO transmet les donner.
+    $query = "SELECT * FROM friend";//selection la table dans la basse de donner
+    $statement = $pdo->query($query);// A exécuter afin de tester le contenu de votre table friend
+    $friends = $statement->fetchAll(PDO::FETCH_ASSOC);// On veut afficher notre résultat via un tableau associatif (PDO::FETCH_ASSOC)
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>list d'amis</title>
+</head>
+<body>
+    <ul>
+       <!--  boucle sur table friend en resortant tous les nom et prenon present dans la table. -->
+        <?php foreach ($friends as $friend) : ?> 
+            <li><?= $friend['firstname'] . ' ' . $friend['lastname'] ?> </li>
+        <?php endforeach; ?>
+    </ul>
+    <!-- formulaire en methode post avec nom,prenom et envoie. -->
+        <h1>Add a friend !</h1>
+        <div>
+            <label for="firstname">Nom</label>
+            <input type="text" name="friend_firstname" id="firstname" required>
+        </div>
+        <div>
+            <label for="lastname">Prenom</label>
+            <input type="text" name="friend_lastname" id="lastname" required>
+        </div>
+        
+        <button type="submit">Envoyer</button>
+    </form>
+</body>
+</html>
+<?php
+require_once '_connec.php';
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    function test_input($data)
+    { // On récupère les informations saisies précédemment dans un formulaire et on les netoye pour les injection sql
+        $data = trim($data);/* trim — Supprime les espaces (ou d'autres caractères) en début et fin de chaîne */
+        $data = stripslashes($data);/* stripslashes — Supprime les antislashs d'une chaîne */
+        $data = htmlspecialchars($data);/* htmlspecialchars — Convertit les caractères spéciaux en entités HTML */
+        $data = htmlentities($data);/* htmlentities — Convertit tous les caractères éligibles en entités HTML */
+        return $data;
+    }
+    $errors = []; /* tableau d'ereure vide pour les tests. */
+    foreach ($_POST as $key => $value) { /* boucle sur les erreure en faissant les tests */
+        $data[$key] = test_input($value);
+        if (!isset($data[$key])) {
+            $errors[] = "$data[$key] Champs requis."; /* message d'erreure */
+        } elseif (strlen($data[$key]) > 45) {
+            $errors[] = "$data[$key] Ne peut pas faire plus de 45 caractheres.";
+        }
+    }
+    if ($errors) {
+        var_dump($errors);
+    } else {
+        $pdo = new \PDO(DSN, USER, PASS);
+        $lastname = $data['friend_lastname'];
+        $firstname = $data['friend_firstname'];
+        $query = "INSERT INTO friend (lastname, firstname) VALUES (:lastname, :firstname);";// On prépare notre requête d'insertion
+        $statement = $pdo->prepare($query);
+        $statement->bindValue(':lastname', $lastname, \PDO::PARAM_STR);// On lie les valeurs saisies dans le formulaire à nos placeholders pour le nom.
+        $statement->bindValue(':firstname', $firstname, \PDO::PARAM_STR);// On lie les valeurs saisies dans le formulaire à nos placeholders pour le prenom.
+        $statement->execute();//execute la requette 
+        $friends = $statement->fetchAll();
+        header("Location: index.php");// redirection vers la page index.php
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
